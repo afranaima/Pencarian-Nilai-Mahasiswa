@@ -1,0 +1,319 @@
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <list>
+#include <array>
+#include <fstream>
+#include <algorithm>
+
+class Mahasiswa
+{
+private:
+public:
+	float m_Ratarata;
+	std::string m_NIM;
+	std::string m_Nama;
+	std::array<unsigned short, 4> m_Nilai;
+
+	Mahasiswa();
+	void get_Average();
+};
+class Program
+{
+private:
+	std::list<Mahasiswa> data;
+public:
+	Program();
+	void readFile(int index, const std::string& filename);
+	void print();
+	void printMhs();
+	void printMhsRatarata();
+	void printCount();
+	void printRentang();
+	void printNilaitertinggi();
+};
+
+int inputStoi(int min, int max);
+
+const char* text = 
+R"(=============================================
+1. Tampilan Data Mahasiswa
+2. Tampilan Rata-Rata Mahasiswa
+3. Tampilan Nilai Tertinggi Pada Mata Kuliah
+4. Tampilan Rentang Nilai
+5. Tampilan Rata-Rata Tertinggi
+6. Keluar
+=============================================
+Menu yang dipilih : 
+)";
+
+int main() {
+	Program program;
+	int flow = 0;
+	do {
+		if (flow==1){
+			program.printMhs();
+			flow = 0;
+		}
+		else if (flow==2){
+			program.printMhsRatarata();
+			flow = 0;
+	    }
+		else if (flow==3){
+			program.printNilaitertinggi();
+			flow = 0;
+		}
+		else if (flow==4){
+			program.printCount();
+			flow = 0;
+		}
+		else if (flow==5){
+			program.printRentang();
+			flow = 0;
+		}
+		else{
+			std::cout << text;
+			flow = inputStoi(1, 6);
+		}
+	} while (flow != 6);
+}
+
+Mahasiswa::Mahasiswa()
+	: m_Ratarata(0), m_NIM(""), m_Nama(""), m_Nilai({ 0, 0, 0, 0 }) {}
+
+void Mahasiswa::get_Average()
+{
+	float average = 0;
+	short counter = 0;
+	for (auto& i : Mahasiswa::m_Nilai)
+	{
+		if (i == 0)
+		{
+			continue;
+		}
+		else
+		{
+			average += i;
+			counter++;
+		}
+		Mahasiswa::m_Ratarata =  average / counter;
+	}
+}
+
+Program::Program()
+{
+	readFile(0, "MK-A");
+	readFile(1, "MK-B");
+	readFile(2, "MK-C");
+	readFile(3, "MK-D");
+	for (auto& n : data)
+		n.get_Average();
+	data.sort([&](const Mahasiswa& lhs, const Mahasiswa& rhs) {return lhs.m_NIM.compare(rhs.m_NIM) > 0;  });
+}
+
+void Program::readFile(int index, const std::string& filename)
+{
+	{
+		std::string filepath = filename + ".csv";
+		std::ifstream input(filepath);
+		if (!input.is_open())
+		{
+			std::cout << "File tidak dapat dibuka\n";
+			return;
+		}
+
+		std::string line;
+		while (std::getline(input, line))
+		{
+			Mahasiswa temp;
+			std::istringstream iss(line);
+			std::getline(iss, temp.m_NIM, ';');
+			std::getline(iss, temp.m_Nama, ';');
+			iss >> temp.m_Nilai[index];
+
+			std::list<Mahasiswa>::iterator iter = std::find_if(data.begin(), data.end(),
+				[&](const Mahasiswa& mhs) { return mhs.m_Nama == temp.m_Nama; });
+
+
+			if (iter != data.end())
+			{
+				iter->m_Nilai[index] = temp.m_Nilai[index];
+			}
+			else
+			{
+				data.push_back(temp);
+			}
+		}
+	}
+}
+
+void Program::printMhs()
+{
+	std::cout << "1. NIM\n2. Nama\n";
+	int flow = inputStoi(1, 2);
+	if (flow == 1)
+	{
+		Mahasiswa temp;
+		std::cout << "Masukkan NIM Mahasiswa yang Dicari : ";
+		std::getline(std::cin, temp.m_NIM);
+
+		std::list<Mahasiswa>::iterator iter = std::find_if(data.begin(), data.end(),
+			[&](const Mahasiswa& mhs) { return mhs.m_NIM == temp.m_NIM; });
+
+		if (iter == data.end())
+		{
+			std::cout << "Data not found\n";
+			return;
+		}
+
+		std::cout << iter->m_NIM << ' ' << iter->m_Nama << ' '
+			<< iter->m_Nilai[0] << ' '
+			<< iter->m_Nilai[1] << ' '
+			<< iter->m_Nilai[2] << ' '
+			<< iter->m_Nilai[3] << '\n';
+	}
+	else if (flow == 2)
+	{
+		Mahasiswa temp;
+		std::cout << "Masukkan Nama Mahasiswa yang Dicari : ";
+		std::getline(std::cin, temp.m_Nama);
+		std::list<Mahasiswa>::iterator iter = std::find_if(data.begin(), data.end(),
+			[&](const Mahasiswa& mhs) { return mhs.m_Nama == temp.m_Nama; });
+		if (iter == data.end())
+		{
+			std::cout << "Data not found\n";
+			return;
+		}
+		std::cout << iter->m_NIM << ' ' << iter->m_Nama << ' '
+			<< iter->m_Nilai[0] << ' '
+			<< iter->m_Nilai[1] << ' '
+			<< iter->m_Nilai[2] << ' '
+			<< iter->m_Nilai[3] << '\n';
+	}
+}
+
+void Program::printMhsRatarata()
+{
+	unsigned short flow = 0;
+	std::cout << "1. NIM\n2. Nama\n";
+	std::cin >> flow;
+	std::cin.ignore();
+	if (flow == 1)
+	{
+		Mahasiswa temp;
+		std::cout << "Masukkan NIM Mahasiswa yang Dicari : ";
+		std::getline(std::cin, temp.m_NIM);
+
+		std::list<Mahasiswa>::iterator iter = std::find_if(data.begin(), data.end(),
+			[&](const Mahasiswa& mhs) { return mhs.m_NIM == temp.m_NIM; });
+
+		if (iter == data.end())
+		{
+			std::cout << "Data not found\n";
+			return;
+		}
+
+		std::cout << iter->m_NIM << ' ' << iter->m_Nama << ' '
+			<< iter->m_Ratarata << '\n';
+	}
+	else if (flow == 2)
+	{
+		Mahasiswa temp;
+		std::cout << "Masukkan Nama Mahasiswa yang Dicari : ";
+		std::getline(std::cin, temp.m_Nama);
+		std::list<Mahasiswa>::iterator iter = std::find_if(data.begin(), data.end(),
+			[&](const Mahasiswa& mhs) { return mhs.m_Nama == temp.m_Nama; });
+		if (iter == data.end())
+		{
+			std::cout << "Data not found\n";
+			return;
+		}
+		std::cout << iter->m_NIM << ' ' << iter->m_Nama << ' '
+			<< iter->m_Ratarata << '\n';
+	}
+}
+
+void Program::printCount()
+{
+	std::array<unsigned short, 4> category = { 0,0,0,0 };
+	std::cout << "Pilihan Mata Kuliah\n"
+		"1. MK-A\n"
+		"2. MK-B\n"
+		"3. MK-C\n"
+		"4. MK-D\n";
+	int index = inputStoi(1, 4) - 1;
+	for (auto& i : data)
+	{
+		if (i.m_Nilai[index] > 0 and i.m_Nilai[index] <= 60)
+		{
+			category[0]++;
+		}
+		else if (i.m_Nilai[index] > 60 and i.m_Nilai[index] <= 75)
+		{
+			category[1]++;
+		}
+		else if (i.m_Nilai[index] > 75 and i.m_Nilai[index] <= 90)
+		{
+			category[1]++;
+		}
+		else if (i.m_Nilai[index] > 90 and i.m_Nilai[index] <= 100)
+		{
+			category[3]++;
+		}
+	}
+	std::cout << "0-60 : " << category[0] << "\n"
+		<< "61-75 : " << category[1] << "\n"
+		<< "76-90 : " << category[2] << "\n"
+		<< "91-100 : " << category[3] << "\n";
+}
+
+void Program::printRentang()
+{
+	std::cout << "Banyak Data yang Ingin Ditampilkan : ";
+	int number = inputStoi(1, data.size());
+	data.sort([](const Mahasiswa& lhs, const Mahasiswa& rhs) {return lhs.m_Ratarata > rhs.m_Ratarata; });
+	int counter = 0;
+	for (auto& i : data)
+	{
+		if (counter > number)
+			return;
+		std::cout << i.m_NIM << ' ' << i.m_Nama << ' ' << i.m_Ratarata << '\n';
+		counter++;
+	}
+}
+
+void Program::printNilaitertinggi()
+{
+	std::array<unsigned short, 4> category = { 0,0,0,0 };
+	std::cout << "Pilihan Mata Kuliah\n"
+		"1. MK-A\n"
+		"2. MK-B\n"
+		"3. MK-C\n"
+		"4. MK-D\n";
+	int index = inputStoi(1, 4) - 1;
+	data.sort([&](const Mahasiswa& lhs, const Mahasiswa& rhs) {return lhs.m_Nilai[index] > rhs.m_Nilai[index]; });
+	int counter = 0;
+	std::cout << "Banyak Data yang Ingin Ditampilkan : ";
+	int number = inputStoi(1, data.size());
+
+	for (auto& i : data)
+	{
+		if (counter > number)
+			return;
+		std::cout << i.m_NIM << ' ' << i.m_Nama << ' ' << i.m_Nilai[index] << '\n';
+		counter++;
+	}
+}
+
+int inputStoi(int min, int max)
+{
+	std::string temp;
+	int number = 0;
+
+	do {
+		std::getline(std::cin, temp);
+		number = std::stoi(temp);
+	} while (number < min or number > max);
+
+	return number;
+}
